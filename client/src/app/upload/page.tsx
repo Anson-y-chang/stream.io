@@ -1,11 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import axios from "axios";
+import { useState, useRef } from "react";
+import axios from "@/utils/axios";
 import { useRouter } from "next/navigation";
 
 export default function Upload() {
   const router = useRouter();
+  const videoInputRef = useRef<HTMLInputElement>(null);
+  const thumbnailInputRef = useRef<HTMLInputElement>(null);
+  const titleInputRef = useRef<HTMLInputElement>(null);
+  const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
+
   interface VideoInfo {
     video: File;
     thumbnail: File;
@@ -13,7 +18,7 @@ export default function Upload() {
     description: string;
   }
   const [videoInfo, setVideoInfo] = useState<VideoInfo>({
-    video: new File([], ""), // 空的 File 物件
+    video: new File([], ""),
     thumbnail: new File([], ""),
     title: "",
     description: "",
@@ -35,6 +40,30 @@ export default function Upload() {
     }));
   };
 
+  const resetForm = () => {
+    // Reset state
+    setVideoInfo({
+      video: new File([], ""),
+      thumbnail: new File([], ""),
+      title: "",
+      description: "",
+    });
+
+    // Reset file inputs
+    if (videoInputRef.current) {
+      videoInputRef.current.value = "";
+    }
+    if (thumbnailInputRef.current) {
+      thumbnailInputRef.current.value = "";
+    }
+    if (titleInputRef.current) {
+      titleInputRef.current.value = "";
+    }
+    if (descriptionInputRef.current) {
+      descriptionInputRef.current.value = "";
+    }
+  };
+
   const upload = () => {
     const formData = new FormData();
     formData.append("video", videoInfo.video);
@@ -43,14 +72,12 @@ export default function Upload() {
     formData.append("description", videoInfo.description);
 
     axios
-      .post("/api/videos/upload", formData)
+      .post(`/api/videos/upload`, formData)
       .then((res) => {
-        if (res.status == 200) {
-          alert("upload successful");
-        }
+        alert("Upload successful");
+        resetForm();
       })
       .catch((err) => {
-        console.log(err);
         if (err.response?.status === 401) {
           router.push(err.response.data.redirectUrl);
         }
@@ -65,6 +92,7 @@ export default function Upload() {
         <div>
           <div>Select video</div>
           <input
+            ref={videoInputRef}
             className="file:mr-4 file:rounded file:bg-gray-200 file:px-4 file:py-2 file:text-sm hover:file:bg-gray-300 file:cursor-pointer cursor-pointer"
             type="file"
             name="video"
@@ -75,6 +103,7 @@ export default function Upload() {
         <div>
           <div>Select thumbnail</div>
           <input
+            ref={thumbnailInputRef}
             className="file:mr-4 file:rounded file:bg-gray-200 file:px-4 file:py-2 file:text-sm hover:file:bg-gray-300 file:cursor-pointer cursor-pointer"
             type="file"
             name="thumbnail"
@@ -85,8 +114,10 @@ export default function Upload() {
         <div>
           <div>Title</div>
           <input
+            ref={titleInputRef}
             type="text"
             name="title"
+            value={videoInfo.title}
             className="border border-gray-400 rounded outline-none px-1 w-1/2"
             onChange={handleInput}
           />
@@ -94,6 +125,9 @@ export default function Upload() {
         <div>
           <div>Description</div>
           <textarea
+            ref={descriptionInputRef}
+            name="description"
+            value={videoInfo.description}
             className="border border-gray-400 rounded outline-none px-1 w-1/2"
             onChange={handleTextArea}
           />

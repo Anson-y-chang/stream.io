@@ -17,14 +17,28 @@ const __dirname = dirname(__filename);
 
 const server = express();
 
-server.use(cors());
+server.use(
+  cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
 server.use(express.json());
 server.use(
   session({
     key: "user_id",
     secret: "User secret Object Id",
-    resave: "true",
-    saveUninitialized: "false",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: false, // set to true if using https
+      httpOnly: true,
+      sameSite: "lax",
+      maxAge: 1000 * 60 * 60 * 24, // 24 hours
+    },
   })
 );
 
@@ -38,15 +52,18 @@ const client = new MongoClient(
     },
   }
 );
-const streamDB = client.db("stream");
+
+// Serve static files from the uploads directory
+server.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Mount all API routes
+const streamDB = client.db("stream");
 server.use("/api", setupRoutes(streamDB));
 
 // Handle all other routes with Next.js
-server.all("*", (req, res) => {
-  return handle(req, res);
-});
+// server.all("*", (req, res) => {
+//   return handle(req, res);
+// });
 
 // app.prepare().then(async () => {
 server.listen(2222, async () => {

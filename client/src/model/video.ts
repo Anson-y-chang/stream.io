@@ -7,7 +7,11 @@ export interface Video {
   _id: string;
   title: string;
   description: string;
-  videoPath: string;
+  videoSources: {
+    quality: string;
+    path: string;
+    label: string;
+  }[];
   thumbnailPath: string;
   uploadedAt: string;
   views: number;
@@ -17,4 +21,5 @@ export interface Video {
   hours: number;
   minutes: number;
   seconds: number;
+  createdAt: string;
 }

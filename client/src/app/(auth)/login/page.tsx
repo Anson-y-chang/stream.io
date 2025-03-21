@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import axios from "axios";
+import axios from "@/utils/axios";
 import { UserInfo } from "@/model/login";
 
 export default function Login() {
@@ -32,7 +32,7 @@ export default function Login() {
     }
 
     axios
-      .post("/api/auth/login", userInfo, { withCredentials: true })
+      .post("/api/auth/login", userInfo)
       .then((res) => {
         if (res.status == 200) {
           window.dispatchEvent(

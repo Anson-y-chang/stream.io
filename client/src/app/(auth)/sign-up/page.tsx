@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import axios from "axios";
+import axios from "@/utils/axios";
 import { UserInfo } from "@/model/login";
 // import { useRouter } from "next/navigation";
 

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import axios from "axios";
+import axios from "@/utils/axios";
 
 export default function Navbar() {
   const [isLogin, setIsLogin] = useState(false);
@@ -24,7 +24,7 @@ export default function Navbar() {
 
   const logOut = () => {
     axios
-      .post("/api/auth/logout", { withCredentials: true })
+      .post("/api/auth/logout")
       .then((res) => {
         if (res.status == 200) {
           window.dispatchEvent(

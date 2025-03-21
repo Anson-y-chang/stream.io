@@ -31,7 +31,7 @@ export default function RootLayout({
         <Navbar></Navbar>
         {children}
         <footer className="h-20 bg-gray-800 text-white flex justify-center items-center">
-          <div className="">Copyright @ Anson y zhang</div>
+          {/* <div className="">Copyright @ Anson y zhang</div> */}
         </footer>
       </body>
     </html>
