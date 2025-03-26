@@ -42,7 +42,7 @@ export default function Navbar() {
   return (
     <nav className="px-4 h-20 flex gap-4 items-center bg-gray-800 text-white text-xl">
       <Link href="/">Home</Link>
-      <Link href="/streaming">Streaming</Link>
+      <Link href="/my_video">My video</Link>
       {isLogin ? (
         <>
           <Link href={"/upload"} className="ml-auto">
