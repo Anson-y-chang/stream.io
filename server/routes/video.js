@@ -32,7 +32,6 @@ const processVideo = (inputPath) => {
   );
 
   // 確保輸出目錄存在
-
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
   }

@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import axios from "@/utils/axios";
 import { Video } from "@/model/video";
 import Hls from "hls.js";
+import "./style.css";
 
 export default function VideoPage() {
   const { id } = useParams();
@@ -12,6 +13,8 @@ export default function VideoPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [currentQuality, setCurrentQuality] = useState<string>("720p");
   const videoRef = useRef<HTMLVideoElement>(null);
+  const playIcon = useRef<SVGSVGElement | null>(null);
+  const pauseIcon = useRef<SVGSVGElement | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -19,7 +22,7 @@ export default function VideoPage() {
   const [volume, setVolume] = useState(1);
   const [showControls, setShowControls] = useState(true);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
+  const [isDragging] = useState(false);
   const hlsRef = useRef<Hls | null>(null);
   const [hoverTime, setHoverTime] = useState<number | null>(null);
 
@@ -49,7 +52,7 @@ export default function VideoPage() {
       }
 
       const hls = new Hls({
-        debug: true,
+        debug: false,
         manifestLoadPolicy: {
           default: {
             maxTimeToFirstByteMs: 10000,
@@ -99,6 +102,7 @@ export default function VideoPage() {
 
       hls.on(
         Hls.Events.LEVEL_SWITCHED,
+        /* eslint-disable @typescript-eslint/no-explicit-any */
         (_event: any, data: { level: number }) => {
           console.log(
             "Quality level switched to:",
@@ -109,6 +113,7 @@ export default function VideoPage() {
 
       hls.on(
         Hls.Events.ERROR,
+        /* eslint-disable @typescript-eslint/no-explicit-any */
         (
           _event: any,
           data: {
@@ -142,13 +147,27 @@ export default function VideoPage() {
       videoRef.current.src = manifestUrl;
     }
 
-    // 清理函數
     return () => {
       if (hlsRef.current) {
         hlsRef.current.destroy();
       }
     };
-  }, [video]); // 依賴 videoRef.current 和 id
+  }, [video, id]); 
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.code === "Space" || event.key === " ") {
+        event.preventDefault(); // 避免按下空白鍵導致頁面滾動
+        togglePlay();
+        toggleIcon();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
 
   const handleQualityChange = (quality: string) => {
     if (videoRef.current) {
@@ -157,6 +176,7 @@ export default function VideoPage() {
     }
   };
 
+  // 切換畫質後維持時間
   useEffect(() => {
     if (videoRef.current) {
       videoRef.current.currentTime = currentTime;
@@ -165,12 +185,33 @@ export default function VideoPage() {
 
   const togglePlay = () => {
     if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-      } else {
+      // console.log(videoRef.current.paused);
+      if (videoRef.current.paused) {
         videoRef.current.play();
+      } else {
+        videoRef.current.pause();
       }
       setIsPlaying(!isPlaying);
+    }
+  };
+
+  const toggleIcon = () => {
+    if (videoRef.current) {
+      if (videoRef.current.paused) {
+        // show play icon
+        if (playIcon.current) {
+          playIcon.current.classList.remove("grow-and-fadeOut");
+          void playIcon.current.getBoundingClientRect(); // 強制重繪
+          playIcon.current.classList.add("grow-and-fadeOut");
+        }
+      } else {
+        // show pause icon
+        if (pauseIcon.current) {
+          pauseIcon.current.classList.remove("grow-and-fadeOut"); // 先移除
+          void pauseIcon.current.getBoundingClientRect(); // 強制重繪
+          pauseIcon.current.classList.add("grow-and-fadeOut"); // 再新增
+        }
+      }
     }
   };
 
@@ -215,31 +256,8 @@ export default function VideoPage() {
     return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
   };
 
-  const handleLoadedMetadata = () => {
-    if (videoRef.current) {
-      setDuration(videoRef.current.duration);
-    }
-  };
-
   const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (videoRef.current && !isDragging) {
-      const progressBar = e.currentTarget;
-      const rect = progressBar.getBoundingClientRect();
-      const pos = (e.clientX - rect.left) / progressBar.offsetWidth;
-      videoRef.current.currentTime = pos * duration;
-    }
-  };
-
-  const handleProgressDragStart = () => {
-    setIsDragging(true);
-  };
-
-  const handleProgressDragEnd = () => {
-    setIsDragging(false);
-  };
-
-  const handleProgressDrag = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (isDragging && videoRef.current) {
       const progressBar = e.currentTarget;
       const rect = progressBar.getBoundingClientRect();
       const pos = (e.clientX - rect.left) / progressBar.offsetWidth;
@@ -268,7 +286,39 @@ export default function VideoPage() {
                 onPause={() => setIsPlaying(false)}
                 onEnded={() => setIsPlaying(false)}
               />
-
+              <div
+                className="absolute top-0 bottom-0 left-0 right-0 bg-transparent flex justify-center items-center"
+                onClick={() => {
+                  togglePlay();
+                  toggleIcon();
+                }}
+              >
+                {isPlaying ? (
+                  <svg
+                    className="w-10 opacity-0"
+                    ref={playIcon}
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 512 512"
+                  >
+                    <path
+                      fill="white"
+                      d="M0 256a256 256 0 1 1 512 0A256 256 0 1 1 0 256zM188.3 147.1c-7.6 4.2-12.3 12.3-12.3 20.9l0 176c0 8.7 4.7 16.7 12.3 20.9s16.8 4.1 24.3-.5l144-88c7.1-4.4 11.5-12.1 11.5-20.5s-4.4-16.1-11.5-20.5l-144-88c-7.4-4.5-16.7-4.7-24.3-.5z"
+                    />
+                  </svg>
+                ) : (
+                  <svg
+                    className="w-10 opacity-0"
+                    ref={pauseIcon}
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 512 512"
+                  >
+                    <path
+                      fill="white"
+                      d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM224 192l0 128c0 17.7-14.3 32-32 32s-32-14.3-32-32l0-128c0-17.7 14.3-32 32-32s32 14.3 32 32zm128 0l0 128c0 17.7-14.3 32-32 32s-32-14.3-32-32l0-128c0-17.7 14.3-32 32-32s32 14.3 32 32z"
+                    />
+                  </svg>
+                )}
+              </div>
               {/* Custom Controls */}
               <div
                 className={`absolute bottom-0 left-0 right-0 bg-transparent bg-opacity-70 text-white p-4 transition-opacity duration-300 ${
@@ -330,50 +380,39 @@ export default function VideoPage() {
 
                 <div className="flex items-center gap-4 mt-2">
                   {/* Play/Pause Button */}
-                  <button onClick={togglePlay} className="hover:text-gray-300">
+                  <button
+                    onClick={togglePlay}
+                    className="hover:text-gray-300 cursor-pointer"
+                  >
                     {isPlaying ? (
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        className="h-6 w-6"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
+                        className="h-5 w-5"
+                        viewBox="0 0 320 512"
                       >
                         <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                          fill="white"
+                          d="M48 64C21.5 64 0 85.5 0 112L0 400c0 26.5 21.5 48 48 48l32 0c26.5 0 48-21.5 48-48l0-288c0-26.5-21.5-48-48-48L48 64zm192 0c-26.5 0-48 21.5-48 48l0 288c0 26.5 21.5 48 48 48l32 0c26.5 0 48-21.5 48-48l0-288c0-26.5-21.5-48-48-48l-32 0z"
                         />
                       </svg>
                     ) : (
                       <svg
+                        className="h-5 w-5"
                         xmlns="http://www.w3.org/2000/svg"
-                        className="h-6 w-6"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
+                        viewBox="0 0 384 512"
                       >
                         <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
-                        />
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                          fill="white"
+                          d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80L0 432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"
                         />
                       </svg>
                     )}
                   </button>
 
                   {/* Time Display */}
-                  <span className="text-sm">
+                  <div className="">
                     {formatTime(currentTime)} / {formatTime(duration)}
-                  </span>
+                  </div>
 
                   {/* Volume Control */}
                   <div className="flex items-center gap-2">

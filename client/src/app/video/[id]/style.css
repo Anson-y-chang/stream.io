@@ -1,0 +1,14 @@
+@keyframes grow-and-fadeOut {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+.grow-and-fadeOut {
+  animation: grow-and-fadeOut 0.5s ease-out forwards;
+}

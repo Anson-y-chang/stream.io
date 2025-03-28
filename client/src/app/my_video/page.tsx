@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { Video } from "@/model/video";
 import axios from "@/utils/axios";
@@ -12,7 +12,7 @@ export default function MyVideos() {
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const router = useRouter();
 
-  const fetchVideos = () => {
+  const fetchVideos = useCallback(() => {
     axios
       .get("/api/videos/my")
       .then((res) => {
@@ -28,11 +28,11 @@ export default function MyVideos() {
       .finally(() => {
         setIsLoading(false);
       });
-  };
+  }, [router]);
 
   useEffect(() => {
     fetchVideos();
-  }, [router]);
+  }, [router, fetchVideos]);
 
   const handleDelete = async (videoId: string, e: React.MouseEvent) => {
     e.stopPropagation(); // 防止觸發卡片的點擊事件
@@ -41,6 +41,7 @@ export default function MyVideos() {
       return;
     }
 
+    /* eslint-disable @typescript-eslint/no-explicit-any */
     try {
       setIsDeleting(videoId);
       await axios.delete(`/api/videos/${videoId}`);
@@ -62,7 +63,7 @@ export default function MyVideos() {
         ) : videos.length === 0 ? (
           <div className="col-span-full text-center">
             <p className="text-gray-500 mb-4">
-              You haven't uploaded any videos yet.
+              {"You haven't uploaded any videos yet."}
             </p>
             <button
               onClick={() => router.push("/upload")}

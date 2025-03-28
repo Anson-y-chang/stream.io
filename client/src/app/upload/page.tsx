@@ -73,7 +73,7 @@ export default function Upload() {
 
     axios
       .post(`/api/videos/upload`, formData)
-      .then((res) => {
+      .then(() => {
         alert("Upload successful");
         resetForm();
       })

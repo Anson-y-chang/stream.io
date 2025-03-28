@@ -26,7 +26,7 @@ export default function setupRoutes(db) {
 
   // HLS streaming routes
   router.get("/videos/:id/stream", getVideoBinary(db)); // 主播放列表
-  router.get("/videos/:id/:quality/:filename", getVideoBinary(db)); // 片段文件
+  // router.get("/videos/:id/:quality/:filename", getVideoBinary(db)); // 片段文件
 
   return router;
 }
